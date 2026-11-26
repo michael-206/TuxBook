@@ -1,0 +1,8 @@
+{
+    "name": "Mats",
+    "version": "1.0",
+    "author": "Michael Prokoudine",
+    "entrypoint": "main",
+    "description": "A app that teaches you addition and subtraction.",
+    "icon": "keys.png"
+}

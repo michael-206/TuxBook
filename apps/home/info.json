@@ -1,0 +1,8 @@
+{
+    "name": "Home",
+    "version": "1.0",
+    "author": "Michael Prokoudine",
+    "entrypoint": "main",
+    "description": "The home screen",
+    "icon": "home.png"
+}

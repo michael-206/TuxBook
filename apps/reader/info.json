@@ -1,0 +1,8 @@
+{
+    "name": "My Books",
+    "version": "1.0",
+    "author": "Michael Prokoudine",
+    "entrypoint": "main",
+    "description": "A EPUB reader app",
+    "icon": "books.png"
+}

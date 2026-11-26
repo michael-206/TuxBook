@@ -1,0 +1,8 @@
+{
+    "name": "ChatGPT",
+    "version": "1.0",
+    "author": "Michael Prokoudine",
+    "entrypoint": "main",
+    "description": "An app to communicate with ChatGPT",
+    "icon": "chatgpt.png"
+}

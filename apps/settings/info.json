@@ -1,0 +1,8 @@
+{
+    "name": "Settings",
+    "version": "1.0",
+    "author": "Michael Prokoudine",
+    "entrypoint": "main",
+    "description": "The settings app for your ereader",
+    "icon": "setting.png"
+}
