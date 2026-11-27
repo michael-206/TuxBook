@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 from guizero import App, Box, Text, PushButton
 import datetime
+import platform
 
 # Get the directory of the current file
 BASE_DIR = Path(__file__).parent.resolve()
@@ -242,30 +243,34 @@ def get_time():
 
 
 # Import the display bridge after the GUI is created.
-from display_bridge import update_display
+if platform.system() == "Linux":
+    from display_bridge import update_display
 
-refresh = 60
+    refresh = 60
 
-def refresh_eink():
-    global refresh
-    try:
-        if refresh > 0:
-            update_display()
-            refresh =- 1
-        else:
-            update_display(partial=True)
-            refresh = 60
-    except Exception as exc:
-        print(f"Display update failed: {exc}")
+    def refresh_eink():
+        global refresh
+        try:
+            if refresh > 0:
+                update_display()
+                refresh =- 1
+            else:
+                update_display(partial=True)
+                refresh = 60
+        except Exception as exc:
+            print(f"Display update failed: {exc}")
 
-from touch_bridge import start_touch_reader
+    from touch_bridge import start_touch_reader
 
-start_touch_reader()
+    start_touch_reader()
 
-print("GUI DISPLAY:", os.environ.get("DISPLAY"), flush=True)
+    print("GUI DISPLAY:", os.environ.get("DISPLAY"), flush=True)
+    root.repeat(1000, refresh_eink)
+else:
+    from ui_scale import SCALE, s, apply_scale
+    apply_scale(root)
 
 header_text.repeat(1000, get_time)
-root.repeat(1000, refresh_eink)
 
 root.display()
 
