@@ -290,7 +290,8 @@ def _insert_text(value):
 
         if keyboard_shift and value.isalpha():
             keyboard_shift = False
-            _refresh_keyboard_labels()
+            # Rebuild the letter keys so their labels return to lowercase.
+            root.tk.after_idle(_build_keyboard)
     except tk.TclError:
         pass
 
@@ -381,7 +382,6 @@ def _build_keyboard():
     for child in keyboard_frame.winfo_children():
         child.destroy()
 
-    '''
     # Make all 10 keyboard columns expand equally
     for column in range(10):
         keyboard_frame.grid_columnconfigure(
@@ -392,7 +392,7 @@ def _build_keyboard():
 
     # Make keyboard rows expand equally
     for row in range(4):
-        keyboard_frame.grid_rowconfigure(row, weight=1)'''
+        keyboard_frame.grid_rowconfigure(row, weight=1)
 
     if not keyboard_symbols:
         for index, letter in enumerate("qwertyuiop"):
@@ -434,7 +434,7 @@ def _build_keyboard():
             _add_key(0, index, 1, char, lambda value=char: _insert_text(value))
         for index, char in enumerate(rows[1], start=1):
             _add_key(1, index, 1, char, lambda value=char: _insert_text(value))
-        _add_key(2, 0, 2, "⇧", _toggle_shift)
+        _add_key(2, 0, 1, "⇧", _toggle_shift)
         for index, char in enumerate(rows[2], start=2):
             _add_key(2, index, 1, char, lambda value=char: _insert_text(value))
         _add_key(2, 9, 1, "⌫", _backspace)
