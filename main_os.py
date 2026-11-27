@@ -193,41 +193,33 @@ def update_pinned_apps():
 
 content_frame = Box(root, align="top", width="fill", height="fill")
 
-
 # --------------------------------------------------
 # On-screen keyboard
 # --------------------------------------------------
 
-# The keyboard is a native Tkinter frame placed over the lower part of
-# the content area. It does not replace or modify the app currently open.
-keyboard_height = 500
+# A larger touch keyboard. It overlays the content area and leaves the
+# bottom navigation visible.
+keyboard_height = 470
 keyboard_visible = False
 keyboard_target = None
 keyboard_shift = False
+keyboard_symbols = False
 
-keyboard_frame = tk.Frame(
-    root.tk,
-    bg="#eeeeee",
-    bd=2,
-    relief="solid"
-)
+keyboard_frame = tk.Frame(root.tk, bg="#dedede", bd=2, relief="solid")
+keyboard_buttons = {}
 
-# Use a 12-column grid so the modifier and spacebar keys can be wider.
 for column in range(12):
     keyboard_frame.grid_columnconfigure(column, weight=1, uniform="keyboard")
 for row in range(4):
     keyboard_frame.grid_rowconfigure(row, weight=1, uniform="keyboard")
 
-keyboard_buttons = {}
 
 def _remember_keyboard_target(event):
-    """Remember the last text-entry widget touched by the user."""
+    """Remember the last text input touched by the user."""
     global keyboard_target
-
     widget = event.widget
     try:
-        widget_class = widget.winfo_class()
-        if widget_class in ("Entry", "Text", "TEntry", "TCombobox", "Spinbox"):
+        if widget.winfo_class() in ("Entry", "Text", "TEntry", "TCombobox", "Spinbox"):
             keyboard_target = widget
             show_keyboard()
     except tk.TclError:
@@ -240,7 +232,7 @@ def show_keyboard():
         keyboard_frame.place(
             relx=0.5,
             rely=1.0,
-            y=-120,                 # Keep the 120px bottom navigation visible.
+            y=-120,
             anchor="s",
             relwidth=1.0,
             height=keyboard_height
@@ -261,151 +253,6 @@ def toggle_keyboard():
     else:
         show_keyboard()
 
-
-def _insert_text(value):
-    """Insert a character into the last focused input, not the key button."""
-    global keyboard_target, keyboard_shift
-
-    widget = keyboard_target
-    if widget is None:
-        return
-
-    try:
-        if not widget.winfo_exists():
-            keyboard_target = None
-            return
-
-        widget_class = widget.winfo_class()
-
-        # Replace selected text if there is a selection.
-        try:
-            widget.delete("sel.first", "sel.last")
-        except tk.TclError:
-            pass
-
-        if widget_class == "Text":
-            widget.insert("insert", value)
-        else:
-            widget.insert("insert", value)
-
-        if keyboard_shift and value.isalpha():
-            keyboard_shift = False
-            _refresh_keyboard_labels()
-
-    except tk.TclError:
-        keyboard_target = None
-
-
-def _backspace():
-    widget = keyboard_target
-    if widget is None:
-        return
-
-    try:
-        if not widget.winfo_exists():
-            return
-
-        try:
-            widget.delete("sel.first", "sel.last")
-            return
-        except tk.TclError:
-            pass
-
-        if widget.winfo_class() == "Text":
-            if widget.compare("insert", ">", "1.0"):
-                widget.delete("insert-1c", "insert")
-        else:
-            cursor = widget.index("insert")
-            if cursor > 0:
-                widget.delete(cursor - 1, cursor)
-    except tk.TclError:
-        pass
-
-
-def _enter():
-    widget = keyboard_target
-    if widget is None:
-        return
-
-    try:
-        if widget.winfo_exists():
-            if widget.winfo_class() == "Text":
-                widget.insert("insert", "\n")
-            else:
-                widget.event_generate("<Return>")
-    except tk.TclError:
-        pass
-
-
-def _toggle_shift():
-    global keyboard_shift
-    keyboard_shift = not keyboard_shift
-    _refresh_keyboard_labels()
-
-
-def _add_key(row, column, span, label, command, key_name=None):
-    button = tk.Button(
-        keyboard_frame,
-        text=label,
-        command=command,
-        font=("Arial", 48),
-        bg="#ffffff",
-        fg="#111111",
-        activebackground="#dddddd",
-        activeforeground="#111111",
-        relief="raised",
-        bd=1,
-        takefocus=False
-    )
-    button.grid(
-        row=row,
-        column=column,
-        columnspan=span,
-        sticky="nsew",
-        padx=3,
-        pady=3
-    )
-    if key_name:
-        keyboard_buttons[key_name] = button
-    return button
-
-
-def _refresh_keyboard_labels():
-    for letter, button in keyboard_buttons.items():
-        button.configure(text=letter.upper() if keyboard_shift else letter.lower())
-
-
-# Row 1: QWERTY
-for index, letter in enumerate("qwertyuiop"):
-    _add_key(0, index, 1, letter, lambda char=letter: _insert_text(
-        char.upper() if keyboard_shift else char
-    ), key_name=letter)
-
-# Row 2: ASDF row, centered
-for index, letter in enumerate("asdfghjkl", start=1):
-    _add_key(1, index, 1, letter, lambda char=letter: _insert_text(
-        char.upper() if keyboard_shift else char
-    ), key_name=letter)
-
-# Row 3: Shift, letters, and backspace
-_add_key(2, 0, 2, "⇧", _toggle_shift)
-for index, letter in enumerate("zxcvbnm", start=2):
-    _add_key(2, index, 1, letter, lambda char=letter: _insert_text(
-        char.upper() if keyboard_shift else char
-    ), key_name=letter)
-_add_key(2, 9, 3, "⌫", _backspace)
-
-# Row 4: punctuation, space, enter, and dismiss
-_add_key(3, 0, 2, "?123", lambda: _insert_text("?"))
-_add_key(3, 2, 1, ",", lambda: _insert_text(","))
-_add_key(3, 3, 5, "Space", lambda: _insert_text(" "))
-_add_key(3, 8, 1, ".", lambda: _insert_text("."))
-_add_key(3, 9, 2, "↵", _enter)
-_add_key(3, 11, 1, "↓", hide_keyboard)
-
-# Show the keyboard whenever the user taps a supported text-entry widget.
-# The target widget is remembered before the keyboard's own buttons are used.
-root.tk.bind_all("<FocusIn>", _remember_keyboard_target, add="+")
 
 
 # --------------------------------------------------
