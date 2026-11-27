@@ -64,10 +64,11 @@ search_icon = Text(header, align="right", text="🔎", size=48)
 sync_icon = Text(header, align="right", text="🔄️", size=48)
 wifi_icon = Text(header, align="right", text="🛜", size=48)
 bell_icon = Text(header, align="right", text="🔔", size=48)
+brightness_icon = Text(header, align="right", text="🔆", size=48)
 keyboard_icon = Text(header, align="right", text="⌨", size=48)
 keyboard_icon.tk.bind("<Button-1>", lambda event: toggle_keyboard())
 
-header_stuff = [header_text, search_icon, sync_icon, wifi_icon, bell_icon, keyboard_icon]
+header_stuff = [header_text, search_icon, sync_icon, wifi_icon, bell_icon, brightness_icon, keyboard_icon]
 
 for item in header_stuff:
     item.tk.pack_configure(padx=10, ipady=10)
@@ -193,58 +194,68 @@ def update_pinned_apps():
 
 content_frame = Box(root, align="top", width="fill", height="fill")
 
+
 # --------------------------------------------------
 # On-screen keyboard
 # --------------------------------------------------
 
-# A larger touch keyboard. It overlays the content area and leaves the
-# bottom navigation visible.
 keyboard_height = 470
 keyboard_visible = False
 keyboard_target = None
 keyboard_shift = False
 keyboard_symbols = False
 
+# Create the keyboard as a direct child of the main Tk window so it can
+# reliably overlay the app content and remain above other widgets.
 keyboard_frame = tk.Frame(root.tk, bg="#dedede", bd=2, relief="solid")
 keyboard_buttons = {}
 
-for column in range(12):
+for column in range(10):
     keyboard_frame.grid_columnconfigure(column, weight=1, uniform="keyboard")
 for row in range(4):
     keyboard_frame.grid_rowconfigure(row, weight=1, uniform="keyboard")
 
 
 def _remember_keyboard_target(event):
-    """Remember the last text input touched by the user."""
     global keyboard_target
     widget = event.widget
     try:
-        if widget.winfo_class() in ("Entry", "Text", "TEntry", "TCombobox", "Spinbox"):
+        widget_class = widget.winfo_class()
+        if widget_class in ("Entry", "Text", "TEntry", "TCombobox", "Spinbox"):
             keyboard_target = widget
             show_keyboard()
     except tk.TclError:
         pass
 
 
-def show_keyboard():
-    global keyboard_visible
-    if not keyboard_visible:
+def _position_keyboard():
+    """Position the keyboard above the 120px bottom navigation bar."""
+    if keyboard_visible:
+        root.tk.update_idletasks()
+        window_width = max(1, root.tk.winfo_width())
+        window_height = max(1, root.tk.winfo_height())
+        y = max(0, window_height - 120 - keyboard_height)
         keyboard_frame.place(
-            relx=0.5,
-            rely=1.0,
-            y=-120,
-            anchor="s",
-            relwidth=1.0,
-            height=keyboard_height
+            x=0,
+            y=y,
+            width=window_width,
+            height=min(keyboard_height, max(1, window_height - 120))
         )
         keyboard_frame.lift()
-        keyboard_visible = True
+
+
+def show_keyboard():
+    global keyboard_visible
+    keyboard_visible = True
+    _position_keyboard()
+    # Lift again after Tk has completed pending geometry/layout work.
+    root.tk.after_idle(_position_keyboard)
 
 
 def hide_keyboard():
     global keyboard_visible
-    keyboard_frame.place_forget()
     keyboard_visible = False
+    keyboard_frame.place_forget()
 
 
 def toggle_keyboard():
@@ -254,6 +265,197 @@ def toggle_keyboard():
         show_keyboard()
 
 
+def _target_is_valid():
+    global keyboard_target
+    try:
+        return keyboard_target is not None and keyboard_target.winfo_exists()
+    except tk.TclError:
+        keyboard_target = None
+        return False
+
+
+def _insert_text(value):
+    global keyboard_shift
+    if not _target_is_valid():
+        return
+
+    widget = keyboard_target
+    try:
+        try:
+            widget.delete("sel.first", "sel.last")
+        except tk.TclError:
+            pass
+
+        widget.insert("insert", value)
+
+        if keyboard_shift and value.isalpha():
+            keyboard_shift = False
+            _refresh_keyboard_labels()
+    except tk.TclError:
+        pass
+
+
+def _backspace():
+    if not _target_is_valid():
+        return
+
+    widget = keyboard_target
+    try:
+        try:
+            widget.delete("sel.first", "sel.last")
+            return
+        except tk.TclError:
+            pass
+
+        if widget.winfo_class() == "Text":
+            if widget.compare("insert", ">", "1.0"):
+                widget.delete("insert-1c", "insert")
+        else:
+            cursor = widget.index("insert")
+            if cursor > 0:
+                widget.delete(cursor - 1, cursor)
+    except tk.TclError:
+        pass
+
+
+def _enter():
+    if not _target_is_valid():
+        return
+
+    widget = keyboard_target
+    try:
+        if widget.winfo_class() == "Text":
+            _insert_text("\n")
+        else:
+            widget.event_generate("<Return>")
+    except tk.TclError:
+        pass
+
+
+def _toggle_shift():
+    global keyboard_shift
+    keyboard_shift = not keyboard_shift
+    _build_keyboard()
+
+
+def _toggle_symbols():
+    global keyboard_symbols, keyboard_shift
+    keyboard_symbols = not keyboard_symbols
+    keyboard_shift = False
+    _build_keyboard()
+
+
+def _add_key(row, column, span, label, command, key_name=None):
+    button = tk.Button(
+        keyboard_frame,
+        text=label,
+        command=command,
+        font=("Arial", 48, "bold"),
+        bg="#ffffff",
+        fg="#111111",
+        activebackground="#cccccc",
+        activeforeground="#111111",
+        relief="raised",
+        bd=1,
+        takefocus=False,
+        padx=2,
+        pady=8
+    )
+    button.grid(
+        row=row,
+        column=column,
+        columnspan=span,
+        sticky="nsew",
+        padx=4,
+        pady=5
+    )
+    if key_name:
+        keyboard_buttons[key_name] = button
+    return button
+
+
+def _build_keyboard():
+    global keyboard_buttons
+    keyboard_buttons = {}
+
+    for child in keyboard_frame.winfo_children():
+        child.destroy()
+
+    '''
+    # Make all 10 keyboard columns expand equally
+    for column in range(10):
+        keyboard_frame.grid_columnconfigure(
+            column,
+            weight=1,
+            uniform="keyboard"
+        )
+
+    # Make keyboard rows expand equally
+    for row in range(4):
+        keyboard_frame.grid_rowconfigure(row, weight=1)'''
+
+    if not keyboard_symbols:
+        for index, letter in enumerate("qwertyuiop"):
+            _add_key(
+                0, index, 1, letter.upper() if keyboard_shift else letter,
+                lambda char=letter: _insert_text(char.upper() if keyboard_shift else char),
+                key_name=letter
+            )
+
+        for index, letter in enumerate("asdfghjkl", start=1):
+            _add_key(
+                1, index, 1, letter.upper() if keyboard_shift else letter,
+                lambda char=letter: _insert_text(char.upper() if keyboard_shift else char),
+                key_name=letter
+            )
+
+        _add_key(2, 0, 1, "⇧", _toggle_shift)
+        for index, letter in enumerate("zxcvbnm", start=2):
+            _add_key(
+                2, index, 1, letter.upper() if keyboard_shift else letter,
+                lambda char=letter: _insert_text(char.upper() if keyboard_shift else char),
+                key_name=letter
+            )
+        _add_key(2, 9, 1, "⌫", _backspace)
+    else:
+        normal_rows = [
+            list("1234567890"),
+            list("@#$%&-*+()"),
+            list("!\"'/:;?"),
+        ]
+        shifted_rows = [
+            list("~`|\\^€£¥<>"),
+            list("_={}[]"),
+            list(".,"),
+        ]
+        rows = shifted_rows if keyboard_shift else normal_rows
+
+        for index, char in enumerate(rows[0]):
+            _add_key(0, index, 1, char, lambda value=char: _insert_text(value))
+        for index, char in enumerate(rows[1], start=1):
+            _add_key(1, index, 1, char, lambda value=char: _insert_text(value))
+        _add_key(2, 0, 1, "⇧", _toggle_shift)
+        for index, char in enumerate(rows[2], start=2):
+            _add_key(2, index, 1, char, lambda value=char: _insert_text(value))
+        _add_key(2, 9, 1, "⌫", _backspace)
+
+    _add_key(3, 0, 2, "ABC" if keyboard_symbols else "?123", _toggle_symbols)
+    _add_key(3, 2, 1, ",", lambda: _insert_text(","))
+    _add_key(3, 3, 4, "Space", lambda: _insert_text(" "))
+    _add_key(3, 7, 1, ".", lambda: _insert_text("."))
+    _add_key(3, 8, 1, "↵", _enter)
+    _add_key(3, 9, 1, "↓", hide_keyboard)
+
+
+_build_keyboard()
+
+# Bind both focus and touch/click. Some GuiZero/Tk widgets don't reliably
+# emit FocusIn when tapped, so Button-1 provides a second activation path.
+root.tk.bind_all("<FocusIn>", _remember_keyboard_target, add="+")
+root.tk.bind_all("<Button-1>", _remember_keyboard_target, add="+")
+
+# Keep the overlay correctly positioned if the window is resized.
+root.tk.bind("<Configure>", lambda event: _position_keyboard(), add="+")
 
 # --------------------------------------------------
 # App loading
