@@ -3,6 +3,13 @@
 ## Overview
 TuxBook is a RaspberryPI based ereader that is designed to hand control back to you, the user. The basic OS runs as a GuiZero app, that is projected onto the eink screen. Touch input is processed using a AR1100 resistive touchscreen controller which controls the OS via a python driver. The ereader OS was degigned in a way to make app development easy, requiring minimal boilerplate and easy app structure, only needing an info.json file and an actuall app file.
 
+## Hardware
+1. Raspberry PI zero 2W
+2. Waveshare 6 inch HD e paper screen with IT8951 Driver
+3. AR1100 resistive touchscreen driver (I used adafruit but you can use any)
+4. Any 4 wire resistive touchscreen that roughly matches the size of the screen
+5. SD card (min 16 GB) 
+
 ## Setup
 1. Clone the repository 
 ```
@@ -29,11 +36,38 @@ pip install -r requirements.txt
         * RST -> P17
         * HRDY -> P24
     * Place touch digitizer over screen
-4. Make start.sh executable (use sudo if doesnt work)
+4. Go into the touch_bridge.py file and edit the config values to match your screen and touch digitizer.
+```python
+# Xvfb screen dimensions
+SCREEN_WIDTH = 1072
+SCREEN_HEIGHT = 1448
+
+# Coordinate orientation
+SWAP_XY = True
+INVERT_X = True
+INVERT_Y = False
+
+# Raw touchscreen calibration limits
+RAW_MIN_X = 0
+RAW_MAX_X = 4095
+RAW_MIN_Y = 0
+RAW_MAX_Y = 4095
+
+# Active touch area
+ACTIVE_MIN_X = 300
+ACTIVE_MAX_X = 3700
+ACTIVE_MIN_Y = 300
+ACTIVE_MAX_Y = 3700
+
+# Screen-coordinate offsets
+OFFSET_X = 0
+OFFSET_Y = 30
+```
+5. Make start.sh executable (use sudo if doesnt work)
 ```bash
 chmod +x ./start.sh
 ```
-5. Run the ./start.sh file 
+6. Run the ./start.sh file 
 ```bash
 ./start.sh
 ```
@@ -74,3 +108,6 @@ chmod +x ./start.sh
 
             title = Text(parent, text="Hello World!", size=48)
             message = Text(parent, text="This is the Hello World app.", size=24)
+        ```
+
+    
