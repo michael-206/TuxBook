@@ -434,7 +434,7 @@ def _build_keyboard():
             _add_key(0, index, 1, char, lambda value=char: _insert_text(value))
         for index, char in enumerate(rows[1], start=1):
             _add_key(1, index, 1, char, lambda value=char: _insert_text(value))
-        _add_key(2, 0, 1, "⇧", _toggle_shift)
+        _add_key(2, 0, 2, "⇧", _toggle_shift)
         for index, char in enumerate(rows[2], start=2):
             _add_key(2, index, 1, char, lambda value=char: _insert_text(value))
         _add_key(2, 9, 1, "⌫", _backspace)
