@@ -64,11 +64,10 @@ search_icon = Text(header, align="right", text="🔎", size=48)
 sync_icon = Text(header, align="right", text="🔄️", size=48)
 wifi_icon = Text(header, align="right", text="🛜", size=48)
 bell_icon = Text(header, align="right", text="🔔", size=48)
-brightness_icon = Text(header, align="right", text="🔆", size=48)
 keyboard_icon = Text(header, align="right", text="⌨", size=48)
 keyboard_icon.tk.bind("<Button-1>", lambda event: toggle_keyboard())
 
-header_stuff = [header_text, search_icon, sync_icon, wifi_icon, bell_icon, brightness_icon, keyboard_icon]
+header_stuff = [header_text, search_icon, sync_icon, wifi_icon, bell_icon, keyboard_icon]
 
 for item in header_stuff:
     item.tk.pack_configure(padx=10, ipady=10)
@@ -201,7 +200,7 @@ content_frame = Box(root, align="top", width="fill", height="fill")
 
 # The keyboard is a native Tkinter frame placed over the lower part of
 # the content area. It does not replace or modify the app currently open.
-keyboard_height = 350
+keyboard_height = 500
 keyboard_visible = False
 keyboard_target = None
 keyboard_shift = False
@@ -349,7 +348,7 @@ def _add_key(row, column, span, label, command, key_name=None):
         keyboard_frame,
         text=label,
         command=command,
-        font=("Arial", 22),
+        font=("Arial", 48),
         bg="#ffffff",
         fg="#111111",
         activebackground="#dddddd",
@@ -483,7 +482,7 @@ if platform.system() == "Linux":
     start_touch_reader()
 
     print("GUI DISPLAY:", os.environ.get("DISPLAY"), flush=True)
-    root.repeat(1000, refresh_eink)
+    root.repeat(100, refresh_eink)
 else:
     from ui_scale import SCALE, s, apply_scale
     apply_scale(root)

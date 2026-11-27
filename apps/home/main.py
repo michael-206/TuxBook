@@ -12,4 +12,5 @@ def build(parent, **kwargs):
         parent, text="This is the Home screen app.", size=32
     )
 
-    box = TextBox(parent, width=200, height=100)
+    box = TextBox(parent, width=128)
+    box.text_size = 48
