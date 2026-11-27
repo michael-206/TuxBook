@@ -1,4 +1,4 @@
-from guizero import Text
+from guizero import Text, TextBox
 
 
 def build(parent, **kwargs):
@@ -11,3 +11,5 @@ def build(parent, **kwargs):
     message = Text(
         parent, text="This is the Home screen app.", size=32
     )
+
+    box = TextBox(parent, width=200, height=100)
