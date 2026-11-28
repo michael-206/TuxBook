@@ -1,7 +1,7 @@
 {
     "name": "Notes",
     "version": "1.0",
-    "author": "Michael Prokoudine",
+    "author": "Michael-206",
     "entrypoint": "main",
     "description": "A simple note-taking application.",
     "icon": "wirte.png"
