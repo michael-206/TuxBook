@@ -264,7 +264,7 @@ if platform.system() == "Linux":
         try:
             if refresh > 0:
                 update_display()
-                refresh =- 1
+                refresh -= 1
             else:
                 update_display(partial=True)
                 refresh = 60

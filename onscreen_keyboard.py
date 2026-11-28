@@ -115,10 +115,11 @@ class OnScreenKeyboard:
 
         # Row 4: fixed
         self._key(3, 0, 3, "ABC" if self.symbols else "?123", self._toggle_symbols)
-        self._key(3, 3, 3, ",", lambda: self._type(","))
-        self._key(3, 6, 8, "space", lambda: self._type(" "))
-        self._key(3, 14, 3, ".", lambda: self._type("."))
-        self._key(3, 17, 3, "↵", self._enter)
+        self._key(3, 3, 2, ",", lambda: self._type(","))
+        self._key(3, 5, 8, "space", lambda: self._type(" "))
+        self._key(3, 13, 2, ".", lambda: self._type("."))
+        self._key(3, 15, 3, "↵", self._enter)
+        self._key(3, 18, 2, "↓", self.hide)
 
     def _rebuild_soon(self):
         # Never destroy a button from inside its own click handler.
